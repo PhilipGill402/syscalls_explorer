@@ -10,13 +10,11 @@ void greeting(){
     printf("4. read from file with read()\n");
     printf("5. write to file with write()\n");
     printf("6. fork process with fork()\n");
-    printf("7. execute new program with execve()\n");
+    printf("7. execute new program with execvp()\n");
 }
 
-void syscall_create(){
-    char* name = malloc(sizeof(char) * MAX_NAME_LENGTH);
-    strcpy(name, "test.txt");
-
+void syscall_create(char* name){
+    errno = 0;
     int fd = creat(name, S_IRWXU);
 
     printf("syscall: creat(%s, S_IRWXU)\n", name);
@@ -26,10 +24,8 @@ void syscall_create(){
     free(name);
 }
 
-void syscall_open(){
-    char* name = malloc(sizeof(char) * MAX_NAME_LENGTH);
-    strcpy(name, "test.txt");
-
+void syscall_open(char* name){
+    errno = 0;
     int fd = open(name, O_RDWR);
 
     printf("syscall: open(%s, O_RDWR)\n", name);
@@ -39,19 +35,19 @@ void syscall_open(){
     free(name);
 }
 
-void syscall_close(){
-    int fd = 3;
+void syscall_close(int fd){
     int ret = close(fd);
-
+    errno = 0;
+    
     printf("syscall: close(%d)\n", fd);
     printf("return: %d\n", ret);
     printf("errno: %d\n", errno);
 }
 
-void syscall_read(){
+void syscall_read(int fd){
     char* buffer = malloc(sizeof(char) * MAX_BUFFER_LENGTH);
-    int fd = 3;
-
+    errno = 0;
+    
     int ret = read(fd, buffer, MAX_BUFFER_LENGTH);
 
     printf("syscall: read(%d, buffer, buffer_length)\n", fd);
@@ -60,11 +56,8 @@ void syscall_read(){
     printf("buffer:\n%s", buffer);
 }
 
-void syscall_write(){
-    char* buffer = malloc(sizeof(char) * MAX_BUFFER_LENGTH);
-    int fd = 3;
-
-    strcpy(buffer, "hello world");
+void syscall_write(int fd, char* buffer){
+    errno = 0;
 
     int ret = write(fd, buffer, strlen(buffer));
 
@@ -106,6 +99,51 @@ void syscall_fork(){
     fflush(stdout);
 }
 
+void syscall_exec(char* args[]){
+    pid_t pid = fork();
+    int status;
+    int ret = 0;
+    char* str = args[1];
+    errno = 0;
+
+    //child
+    if (pid == 0){
+        ret = execvp(args[0], args); 
+        printf("syscall: execvp(\"%s\"", args[0]);
+
+        while (str != NULL){
+            printf("%s, ", str);
+            str++; 
+        }
+        printf(")\n");
+        printf("return: %d\n", ret);
+        printf("errno: %d\n", errno);
+
+        _exit(0);
+
+    }  else if (pid < 0){
+        printf("syscall: execvp()\n");
+        printf("return: %d\n", pid);
+        printf("errno: %d\n", errno);
+
+        return;
+    }
+    
+    //parent
+    waitpid(pid, &status, 0);
+
+    printf("syscall: execvp(\"%s\"", args[0]);
+
+    while (str != NULL){
+        printf("%s, ", str);
+        str++; 
+    }
+    printf(")\n");   
+    printf("return: %d\n", ret);
+    printf("errno: %d\n", errno);
+    fflush(stdout);
+}
+
 int main(){
     setvbuf(stdout, NULL, _IOLBF, 0);
     int choice; 
@@ -128,6 +166,8 @@ int main(){
             syscall_write();
         } else if (choice == 6){
             syscall_fork();
+        } else if (choice == 7){
+            syscall_exec();
         } else if (choice == -1){
             running = 0;
         } else {
