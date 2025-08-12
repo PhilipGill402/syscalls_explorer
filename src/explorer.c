@@ -2,6 +2,7 @@
 
 #define MAX_NAME_LENGTH 128
 #define MAX_BUFFER_LENGTH 1024
+#define MAX_ARGS 16
 
 void greeting(){
     printf("1. create file with creat()\n");
@@ -155,19 +156,74 @@ int main(){
         scanf("%d", &choice);
 
         if (choice == 1){
-            syscall_create();
+            char* name = malloc(sizeof(char) * MAX_NAME_LENGTH);
+            printf("Enter the name of the file >> ");
+            scanf("%s", name);
+            printf("\n");
+
+            syscall_create(name);
+
         } else if (choice == 2){
-            syscall_open();
+            char* name = malloc(sizeof(char) * MAX_NAME_LENGTH);
+            printf("Enter the name of the file >> ");
+            scanf("%s", name);
+            printf("\n");
+
+            syscall_open(name);
         } else if (choice == 3){
-            syscall_close(); 
+            int fd;
+            printf("Enter the file descriptor of the file >> ");
+            scanf("%d", &fd);
+            printf("\n");
+
+            syscall_close(fd); 
         } else if (choice == 4){
-            syscall_read();        
+            int fd;
+            printf("Enter the file descriptor of the file >> ");
+            scanf("%d", &fd);
+            printf("\n");
+
+            syscall_read(fd);        
         } else if (choice == 5){
-            syscall_write();
+            int fd;
+            char* buffer = malloc(sizeof(char) * MAX_BUFFER_LENGTH);
+            printf("Enter the file descriptor of the file >> ");
+            scanf("%d", &fd);
+            printf("\n");
+            printf("Enter what you want to write to the file >> ");
+            scanf("%s", buffer);
+            printf("\n");
+
+            syscall_write(fd, buffer);
         } else if (choice == 6){
             syscall_fork();
         } else if (choice == 7){
-            syscall_exec();
+            char** args = malloc(sizeof(char*) * MAX_ARGS);
+            char* command = malloc(sizeof(char) * MAX_NAME_LENGTH);
+            int counter = 1;
+
+            printf("Enter the command you want to run >> ");
+            scanf("%s", command);
+            printf("\n"); 
+            args[0] = command;
+            
+            char* arg = malloc(sizeof(char) * MAX_NAME_LENGTH);
+            while (1){
+                printf("Enter the arguments for the command (enter NULL to break from the loop) >> ");
+                scanf("%s", arg);
+                printf("\n");
+                
+                if (strcmp(arg, "NULL") == 0){
+                    args[counter] = NULL;
+                    counter++;
+                    break;
+                } else {
+                    args[counter] = arg;
+                    counter++;
+                }
+            }
+
+            syscall_exec(args);
         } else if (choice == -1){
             running = 0;
         } else {
