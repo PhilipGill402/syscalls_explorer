@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 void greeting();
 void syscall_create(char* name);

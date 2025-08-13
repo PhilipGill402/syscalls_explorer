@@ -49,12 +49,33 @@ void syscall_read(int fd){
     char* buffer = malloc(sizeof(char) * MAX_BUFFER_LENGTH);
     errno = 0;
     
-    int ret = read(fd, buffer, MAX_BUFFER_LENGTH);
+    ssize_t ret = read(fd, buffer, MAX_BUFFER_LENGTH);
+
+    off_t cur = lseek(fd, 0, SEEK_CUR);
+    if (cur != (off_t) - 1){
+        lseek(fd, 0, SEEK_SET);
+    }
+    
+    if (ret == 0){
+        printf("syscall: read(%d, buffer, buffer_length)\n", fd);
+        printf("return: %ld\n", ret);
+        printf("errno: %d\n", errno);
+        printf("buffer: <EOF>\n"); 
+
+        free(buffer);
+        fflush(stdout);
+        return;
+    }
+    
+    buffer[ret] = '\0';
 
     printf("syscall: read(%d, buffer, buffer_length)\n", fd);
-    printf("return: %d\n", ret);
+    printf("return: %ld\n", ret);
     printf("errno: %d\n", errno);
     printf("buffer:\n%s", buffer);
+
+    free(buffer);
+    fflush(stdout);
 }
 
 void syscall_write(int fd, char* buffer){
@@ -65,6 +86,8 @@ void syscall_write(int fd, char* buffer){
     printf("syscall: write(%d, %s, %lu)\n", fd, buffer, strlen(buffer));
     printf("return: %d\n", ret);
     printf("errno: %d\n", errno);
+
+    fflush(stdout);
 }
 
 void syscall_fork(){
@@ -186,12 +209,18 @@ int main(){
             syscall_read(fd);        
         } else if (choice == 5){
             int fd;
-            char* buffer = malloc(sizeof(char) * MAX_BUFFER_LENGTH);
+            char buffer[MAX_BUFFER_LENGTH];
             printf("Enter the file descriptor of the file >> ");
             scanf("%d", &fd);
             printf("\n");
             printf("Enter what you want to write to the file >> ");
-            scanf("%s", buffer);
+            fflush(stdin);
+            
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF) {}
+
+            fgets(buffer, sizeof(buffer), stdin);
+            buffer[strcspn(buffer, "\n")] = '\0';
             printf("\n");
 
             syscall_write(fd, buffer);
